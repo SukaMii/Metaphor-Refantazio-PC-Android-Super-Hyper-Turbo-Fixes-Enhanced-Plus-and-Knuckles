@@ -11,7 +11,7 @@
 #include <mmsystem.h>
 #include <stdint.h>
 
-#define MCPU_VERSION "0.52.0"
+#define MCPU_VERSION "0.52.1"
 
 /* ------------------------------------------------------------------ config */
 typedef struct Config {

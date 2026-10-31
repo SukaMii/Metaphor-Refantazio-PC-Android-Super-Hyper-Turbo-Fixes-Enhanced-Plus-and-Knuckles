@@ -22,8 +22,8 @@ Measured on a RedMagic Astra tablet (Snapdragon 8 Elite) in the game's heaviest 
 | | The game as it is | With MetaphorCPU |
 |---|---|---|
 | Frame rate | 29.6 FPS (28.6 once the tablet throttles) | **29.9 FPS** (the 30 FPS limit holds) |
-| Battery power | 9.7 W | **7.9 W (−19%)** |
-| Energy per frame | 327 mJ | **263 mJ (−20%)** |
+| Battery power | 9.9 W | **7.5 W (−25%)** |
+| Energy per frame | 340 mJ | **250 mJ (−26%)** |
 | GPU | 87–99% busy, 607–832 MHz | **82% busy at 443 MHz** |
 
 What it changes, in short:

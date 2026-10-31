@@ -92,23 +92,23 @@ int main(void)
         Config a, b;
         load("android", "WorldTextureBias=0.5\nTemporalStabiliseWorldTaps=4\n[GpuProbe]\nComputeCensus=1", &a);
         load("pc", "MotionVectorSkinCrowd=20\n[ABTest]\nEnabled=1\nCompare=savings", &b);
-        /* 0.49.2: 4 taps by default, 8 when asked. 0.49.3: the skin distance 20 m on Android only (auto), 0 (all) on
-         * PC, either set by a number */
-        Config e, p20, a0, pauto;
+        /* 0.49.2: 4 taps by default, 8 when asked. 0.52.1: the skin distance 0 (all) by default and with auto, on
+         * Android and PC, either set by a number */
+        Config e, p20, a20, pauto;
         load("android", "TemporalStabiliseWorldTaps=8\nMotionVectorSkinDistance=auto", &e);
         load("pc", "MotionVectorSkinDistance=20", &p20);
-        load("android", "MotionVectorSkinDistance=0", &a0);
+        load("android", "MotionVectorSkinDistance=20", &a20);
         load("pc", "MotionVectorSkinDistance=auto", &pauto);
         int ok = a.q_world_tex_q == 2 && a.q_stab_world_taps == 4 && a.compute_census && a.q_mv_crowd == 12 &&
                  a.q_active && b.q_mv_crowd == 20 && b.q_world_tex_q == 0 && b.q_stab_world_taps == 4 &&
                  b.ab_compare == AB_SAVINGS && b.q_stab_hooks && b.q_mv_hooks && e.q_stab_world_taps == 8 &&
-                 a.q_mv_skin_dist == 20.0f && e.q_mv_skin_dist == 20.0f && b.q_mv_skin_dist == 0 &&
-                 pauto.q_mv_skin_dist == 0 && p20.q_mv_skin_dist == 20.0f && a0.q_mv_skin_dist == 0;
+                 a.q_mv_skin_dist == 0 && e.q_mv_skin_dist == 0 && b.q_mv_skin_dist == 0 &&
+                 pauto.q_mv_skin_dist == 0 && p20.q_mv_skin_dist == 20.0f && a20.q_mv_skin_dist == 20.0f;
         printf("  [%s] WorldTextureBias, TemporalStabiliseWorldTaps, MotionVectorSkinCrowd, Compare=savings     bias %d, taps "
-               "%d (default %d, =8 %d), skin distance android %.0f / auto %.0f / 0: %.0f, pc %.0f / auto %.0f / 20: %.0f, "
+               "%d (default %d, =8 %d), skin distance android %.0f / auto %.0f / 20: %.0f, pc %.0f / auto %.0f / 20: %.0f, "
                "crowd %d / %d, cycle hooks %d %d\n", ok ? "PASS" : "FAIL",
                a.q_world_tex_q, a.q_stab_world_taps, b.q_stab_world_taps, e.q_stab_world_taps, a.q_mv_skin_dist,
-               e.q_mv_skin_dist, a0.q_mv_skin_dist, b.q_mv_skin_dist, pauto.q_mv_skin_dist, p20.q_mv_skin_dist,
+               e.q_mv_skin_dist, a20.q_mv_skin_dist, b.q_mv_skin_dist, pauto.q_mv_skin_dist, p20.q_mv_skin_dist,
                a.q_mv_crowd, b.q_mv_crowd, b.q_stab_hooks, b.q_mv_hooks);
         fails += !ok;
     }

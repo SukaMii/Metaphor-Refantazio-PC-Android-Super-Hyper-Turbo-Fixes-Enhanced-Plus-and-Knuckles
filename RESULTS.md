@@ -6,55 +6,59 @@ MetaphorCPU is an ASI mod for **Metaphor: ReFantazio** (the April 2025 Steam bui
 
 ## The whole mod (tablet, preset Q21)
 
-One 17-minute session under GameNative (Wine 10.0), in the Sunlumeo street, standing still, switching every 60 s between the game as-is, the mod's Android defaults, and the defaults with `SteadyImage=on`. The first 3 minutes are left out; 20–25 windows of 10 s per variant; the ± values are standard errors of a fit against variant and time.
+One 17-minute session under GameNative (Wine 10.0), in the Sunlumeo street, standing still, switching every 60 s between the game as-is, the mod's Android defaults, and the defaults with `SteadyImage=on`. The first 3 minutes are left out; 20–25 windows of 10 s per variant, with the drift over time fitted out. Battery power and energy per frame come from the last 10 s of the slots instead, where power has nearly settled.
 
 | | Game as-is | MetaphorCPU (defaults) | Defaults + `SteadyImage` |
 |---|---|---|---|
 | Frame rate | 29.6 FPS (28.6 once throttled to 607 MHz) | **29.9 FPS** | 29.9 FPS |
-| Battery power | 9.7 W | **7.9 W (−1.84 ± 0.18 W, −19%)** | 7.8 W (−19%) |
-| Energy per frame | 327 mJ | **263 mJ (−20%)** | 261 mJ (−20%) |
+| Battery power | 9.9 W | **7.5 W (−2.46 W, −25%)** | 7.8 W (−21%) |
+| Energy per frame | 340 mJ | **250 mJ (−26%)** | 262 mJ (−23%) |
 | GPU clock / busy | 832 MHz, 87% busy (607 MHz, 99% once throttled) | **443 MHz, 82% busy** | 525 MHz, 76% busy |
 | Game CPU | 247% of a core | **193% (−22%)** | 202% |
 | Main thread | 14.3 ms/frame | 12.8 ms/frame (−11%) | 13.0 ms/frame |
 
 * **The game as-is needs the GPU's highest clocks:** it holds 30 FPS at 832 MHz until the tablet throttles it to 607 MHz, where it is 99% busy and falls below 30 FPS. With the mod the 30 FPS cap holds at the 443 MHz clock step.
-* **Battery −1.84 W (−19%):** the whole device's draw, screen included, so about 23% longer play on a charge in this scene.
+* **Battery −2.46 W (−25%):** the whole device's draw, screen included, so about a third longer play on a charge in this scene.
+* **Why the last 10 s:** battery power takes about 40 s to settle after a switch, and each variant here ran for 60 s. Averaged over whole slots, with the game as-is still rising and the mod still falling, the saving reads −1.84 ± 0.18 W (−19%; ± is two standard errors). Fitted with the lag, it reads −2.8 W (−28%).
 * Understated, if anything: the job semaphore replacement only takes effect at startup, so the game-as-is variant had it too.
-* **`SteadyImage`:** battery power and frame rate unchanged. The GPU runs one clock step higher, for about 2 ms more GPU work a frame (busy time scaled to 600 MHz).
+* **`SteadyImage`:** the frame rate holds. The GPU runs one clock step higher, for about 2 ms more GPU work a frame (busy time scaled to 600 MHz) and 0.35 W more in the last 10 s of the slots; about 0.5 W once settled (the last column below).
 * Standing still, every variant was smooth (frame-time spread 0.1–0.3 ms) once loading had finished.
 * In this run the SMAA blending-weights shader was not yet patched (fixed since): SMAA High and Medium kept the game's diagonal search there.
 
-The GPU time of each single change is being measured with the preset `Q52_features_tablet.ini`; the figures will be added here.
-
 ## At a glance
 
-| Change | Visible? | Android | PC |
-|---|---|---|---|
-| Shadow-caster culling (static + animated casters) | No | on | on |
-| CPU fixes (job semaphore, spin / wait, no core pinning) | No | on | off |
-| Simpler far meshes (incl. shadow casters by texel) | Hardly | on | off |
-| Far shadows every 2nd frame | Hardly | on | on |
-| SMAA High (instead of Ultra) | Hardly | on | on |
-| Character outlines within 40 m | Hardly | on | off |
-| No toon rim light | Yes, less shimmer | on | off |
-| Glare off (runs in the capital only) | A faint night glow is gone | on | off |
-| Shadows up to 100 m | No shadows beyond 100 m | on | off |
-| Far NPCs animated every 2nd frame (beyond 50 m) | Hardly | on | off |
-| NPC stand-ins from 60 m, adaptive down to 40 m | Yes, NPCs at the edge change model | on | off |
-| **Steadier image: one switch** (`SteadyImage=on`: the four rows below + SMAA Medium) | Yes, much less shimmer | off | off |
-| Temporal stabilisation, characters (40%) | Yes, steadier characters | off | off |
-| Temporal stabilisation, rest of the image (50%) | Yes, steadier edges and railings | off | off |
-| ↳ World clamped to 4 neighbours | No | on | on |
-| Characters' motion vectors | Yes, moving characters stay sharp | off | off |
-| ↳ Limbs' motion only within 20 m in a crowd | No | on | off |
+| Change | Visible? | Android | PC | Android: GPU time · power |
+|---|---|---|---|---|
+| Shadow-caster culling (static + animated casters) | No | on | on | −4.4 ms · −0.9 W |
+| CPU fixes (job semaphore, spin / wait, no core pinning) | No | on | off | 0 ms · −0.3 W |
+| Simpler far meshes (incl. shadow casters by texel) | Hardly | on | off | −2.4 ms · −0.4 W |
+| Far shadows every 2nd frame | Hardly | on | on | −0.8 ms · −0.3 W |
+| SMAA High (instead of Ultra) | Hardly | on | on | −0.4 ms · −0.1 W |
+| Character outlines within 40 m | Hardly | on | off | −0.2 ms · −0.2 W |
+| No toon rim light | Yes, less shimmer | on | off | −0.2 ms · −0.1 W |
+| Glare off (runs in the capital only) | A faint night glow is gone | on | off | −0.4 ms · −0.2 W |
+| Shadows up to 100 m | No shadows beyond 100 m | on | off | −0.6 ms · −0.4 W |
+| Far NPCs animated every 2nd frame (beyond 50 m) | Hardly | on | off | −1.1 ms · −0.3 W |
+| NPC stand-ins from 60 m, adaptive down to 40 m | Yes, NPCs at the edge change model | on | off | −1.5 ms · −0.2 W |
+| **Steadier image: one switch** (`SteadyImage=on`: the four rows below + SMAA Medium) | Yes, much less shimmer | off | off | **+2.4 ms · +0.5 W** |
+| Temporal stabilisation, characters (40%) | Yes, steadier characters | off | off | +0.7 ms · +0.3 W |
+| Temporal stabilisation, rest of the image (50%) | Yes, steadier edges and railings | off | off | +0.6 ms · +0.1 W |
+| ↳ World clamped to 4 neighbours | No | on | on | −0.5 ms · 0 W |
+| Characters' motion vectors | Yes, moving characters stay sharp | off | off | +1.3 ms · +0.1 W |
 
 The "↳" rows only act when the row above them is on.
+
+**The last column** comes from one session of about 26 minutes on the tablet, in the same street, standing still (preset `Q52_features_tablet.ini`, GameNative, Wine 10.0): 20 variants of 30 s in turn, after a 4-minute hold. **−** is a saving and **+** a cost against the defaults, which take 20.3 ms and 7.4 W. Each change was taken back on its own with all the others on. The stabilisation was built up part by part, so each of its rows is the step from the variant before; its first row is the whole switch, measured with the limbs' motion limited to 20 m, which made no measurable difference (see the options below).
+
+* **GPU time** is per frame and scaled to a fixed 600 MHz, because the GPU's clock moves with the load (at their usual 443 MHz the defaults take about 27 ms of the 33 ms frame). Accuracy: ±0.3 ms, ±0.4 ms for the stabilisation's parts.
+* **Power** is the whole device's battery draw, screen included, once settled. Accuracy: about ±0.3 W, from the difference between the rounds, so **GPU time is the firmer comparison**: a row under 0.3 W can't be told from no change on its own. Together they hold up: the 11 rows that are on by default add up to −12 ms and −3.3 W, against −2.5 to −2.8 W for the whole mod.
+* **CPU fixes** without the job semaphore, which only takes effect at startup. The game's CPU use falls by about 9% of a core.
 
 ## How it is tested
 
 | Method | What it gives |
 |---|---|
-| **In-session A/B cycles** (`[ABTest] Compare=…`) | One game session switches between variants every 30–60 s while the player stands still. `tools\summarize_variants.py` fits every metric against variant + time, so heating and battery drift are factored out. The ± values are standard errors. |
+| **In-session A/B cycles** (`[ABTest] Compare=…`) | One game session switches between variants every 30–60 s while the player stands still. `tools\summarize_variants.py` fits every metric against variant + time, so heating and battery drift are factored out. The ± values are two standard errors. Battery power follows a switch with a lag of about 18 s: `--power-lag 18` fits it with that lag and gives the settled values. |
 | **GPU timestamp queries** (`[GpuProbe] Timing=1`) | GPU time per render pass, grouped by target size and format: shows which pass a change acts on. |
 | **Device telemetry** (Android) | Battery power (W), GPU clock and busy %, CPU clusters and per-thread CPU time, read from `/sys` and `/proc`. |
 | **Correctness checks on PC** (`[ShadowCull] Verify=1`, preset Q51) | Every draw the culling would skip is still drawn, inside an occlusion query. About a million of them every 10 s, animated characters included: **0 samples passed**, so the picture is unchanged. |
@@ -106,14 +110,13 @@ The broken, shimmering lines on characters (laces, stitches, hair strands) are t
 | **Temporal stabilisation of the rest** (`TemporalStabiliseWorld=50`) | The same for every other pixel at 50%, reprojected with the camera. A pixel whose previous position was off screen starts afresh. | Steadier railings, ropes, roof edges and far windows while the camera moves | off / off |
 | ↳ **4 neighbours** (`TemporalStabiliseWorldTaps=4`) | The world's pixels are clamped to their 4 direct neighbours instead of the 3×3 (half the reads); the characters keep the 3×3. | No difference seen in play | on / on |
 | **Characters' motion vectors** (`CharacterMotionVectors=on`, within `MotionVectorDistance=40` m) | After the characters' pass, the mod draws each character within 40 m again into a motion target, from its previous transform and a copy of its previous skinned vertices. The stabilisation then follows the characters' own movements. | Moving characters stay sharp | off / off |
-| ↳ **Limbs within 20 m in a crowd** (`MotionVectorSkinDistance=auto`, `MotionVectorSkinCrowd=12`) | With more than 12 characters within 40 m (the most in the last 64 frames: a town), characters beyond 20 m get the motion of their walking and turning alone: their vertices are not copied. With 12 or fewer (a fight) every character keeps its limbs' motion. | Not noticeable | on / off (PC: every character's limbs) |
 
 ## Options, off by default
 
 | Option | Effect | Why off |
 |---|---|---|
 | `VolumetricFog=0` | Less GPU work, capital only | It tints the capital's distant air; kept |
-| `Smaa=off` / `medium` | Less GPU work than High | Off is visibly jagged; Medium shimmers more on diagonal edges than High, unless the stabilisation is on (`SteadyImage` sets Medium) |
+| `Smaa=off` / `medium` | Less GPU work than High (Medium: about −0.4 ms with the stabilisation on) | Off is visibly jagged; Medium shimmers more on diagonal edges than High, unless the stabilisation is on (`SteadyImage` sets Medium) |
 | `FarMeshes=safe` | Less GPU work than the game's meshes | `seams` from 150 m saves more with the same look |
 | `FarMeshSeamsFrom=0` (across seams everywhere) | A little less GPU work | Stripes on columns and uneven stone corners at 50–150 m |
 | `FarShadowRefresh=3` | A little less GPU work | Every 2nd frame looked the same and saves almost as much |
@@ -122,6 +125,7 @@ The broken, shimmering lines on characters (laces, stitches, hair strands) are t
 | `InnerOutlines` (the outline lines drawn over a character's own body: hair, sleeves, collars) | Fewer lines | It removes thick lines that look good (arms, lapels) and leaves most of the thin broken ones (hair). Not used |
 | `OutlineDepthOffset` (the outlines pushed back by a share of their distance) | Fewer streaks in hair | It does not touch the broken lines inside some characters' hair and clothes (their material). Not judged in play yet |
 | `LineFix=redraw` / `thick` (the characters' thin line meshes drawn 4 / 8 times, shifted by a third of a pixel) | The dashes close | The laces still shimmer as the character sways (geometric aliasing). The temporal stabilisation is the cure |
+| `MotionVectorSkinDistance=20` (with the characters' motion vectors, in a crowd of more than `MotionVectorSkinCrowd=12`: characters beyond 20 m get the motion of their walking and turning alone) | Copies less: 3.3 MB a pass instead of 5 MB in the test street | No saving measured in GPU time or power, so every character keeps its limbs' motion |
 
 ## Tested and dropped
 

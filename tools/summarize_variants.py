@@ -6,7 +6,15 @@ fitted over the windows, so slow drift (heating up, battery) is factored out. Wi
 --steady, only windows at the most common GPU clock are used (a throttle step in the
 middle of a run is a jump, not a drift).
 
-Usage: python summarize_variants.py <log> [--steady] [--skip-min N]
+Battery power follows a switch with a lag (about 18 s on the test tablet), so with slots of a minute or
+less a plain average understates each variant and leaks into the next one. With --power-lag S, battery
+power and energy are fitted over every window, transitions too, with each variant's on / off passed
+through that lag: the effects and the base are then the settled values. The other metrics have no lag.
+
+The +- values are two standard errors of the fit. Windows next to each other are not independent, so
+with --power-lag they are too small: compare the rounds of a session.
+
+Usage: python summarize_variants.py <log> [--steady] [--skip-min N] [--power-lag S]
 """
 import argparse
 import math
@@ -93,14 +101,31 @@ def inverse(a):
     return [[cols[j][i] for j in range(n)] for i in range(n)]
 
 
-def fit(wins, key, variants):
+def add_lag(wins, first, lag):
+    """Each window's "x": per variant, its on / off through a lag of lag seconds, over the window's seconds."""
+    a = 1.0 - math.exp(-1.0 / lag)
+    state = {v: 0.0 for v in first.values()}
+    prev = wins[0]["t"] - 10.0
+    for w in wins:
+        n = max(1, int(round(w["t"] - prev)))
+        prev = w["t"]
+        total = dict.fromkeys(state, 0.0)
+        for _ in range(n):
+            for v in state:
+                state[v] += a * ((1.0 if first.get(w["name"]) == v else 0.0) - state[v])
+                total[v] += state[v]
+        w["x"] = {v: total[v] / n for v in state}
+
+
+def fit(wins, key, variants, lagged=False):
     rows = [w for w in wins if key in w]
     if len(rows) < len(variants) + 3:
         return None
     t0 = rows[0]["t"]
     X, y = [], []
     for w in rows:
-        X.append([1.0, (w["t"] - t0) / 60.0] + [1.0 if w["v"] == v else 0.0 for v in variants[1:]])
+        on = [w["x"][v] if lagged else (1.0 if w["v"] == v else 0.0) for v in variants[1:]]
+        X.append([1.0, (w["t"] - t0) / 60.0] + on)
         y.append(w[key])
     p = len(X[0])
     xtx = [[sum(r[i] * r[j] for r in X) for j in range(p)] for i in range(p)]
@@ -113,6 +138,8 @@ def fit(wins, key, variants):
     dof = max(1, len(rows) - p)
     s2 = sum(r * r for r in res) / dof
     base = sum(w[key] for w in rows if w["v"] == variants[0]) / max(1, sum(1 for w in rows if w["v"] == variants[0]))
+    if lagged:  # the base never settles in its own slots: the fit's value in the middle of the session
+        base = beta[0] + beta[1] * (rows[-1]["t"] - t0) / 120.0
     out = {}
     for i, v in enumerate(variants[1:]):
         se = math.sqrt(max(0.0, s2 * inv[2 + i][2 + i]))
@@ -125,8 +152,10 @@ def main():
     ap.add_argument("log")
     ap.add_argument("--steady", action="store_true", help="only windows at the most common GPU clock")
     ap.add_argument("--skip-min", type=float, default=0.0, help="leave out the first N minutes")
+    ap.add_argument("--power-lag", type=float, default=0.0, help="fit battery power and energy with this lag in seconds")
     args = ap.parse_args()
-    wins = [w for w in parse(args.log) if not w["tr"] and w.get("fps", 0) > 5]
+    every = [w for w in parse(args.log) if w.get("fps", 0) > 5]
+    wins = [w for w in every if not w["tr"]]
     if not wins:
         print("no [Q..] windows found")
         return
@@ -148,17 +177,24 @@ def main():
     variants = sorted(names)
     counts = {v: sum(1 for w in wins if w["v"] == v) for v in variants}
     print(f"{len(wins)} windows: " + ", ".join(f"{names[v]} {counts[v]}" for v in variants))
-    metrics = [("W", "battery power W"), ("mJ", "energy per frame mJ"), ("fps", "fps"), ("mhz", "GPU MHz"),
+    settled = []
+    if args.power_lag:
+        add_lag(every, first, args.power_lag)
+        settled = [w for w in every if w["t"] - t_first >= args.skip_min * 60]
+    metrics =[("W", "battery power W"), ("mJ", "energy per frame mJ"), ("fps", "fps"), ("mhz", "GPU MHz"),
                ("busy", "GPU busy %"), ("work", "GPU work ms at 600 MHz"), ("gpums", "GPU ms/frame (timing)"), ("cpu", "game CPU % of a core"), ("main", "main thread ms/frame"),
                ("sd", "frame time sd ms"), ("chars", "character draws/frame")]
     wide = len(variants) > 6  # many variants: one block per metric, a line per variant
     if not wide:
         print(f"   {'metric':24} {'base':>8}  " + "  ".join(f"{names[v][:18]:>24}" for v in variants[1:]))
     for key, label in metrics:
-        r = fit(wins, key, variants)
+        lagged = bool(settled) and key in ("W", "mJ")
+        r = fit(settled if lagged else wins, key, variants, lagged)
         if not r:
             continue
         base, eff = r
+        if lagged:
+            label += " (settled)"
         if wide:
             print(f"   {label}: {names[variants[0]]} {base:.2f}")
             for v in variants[1:]:

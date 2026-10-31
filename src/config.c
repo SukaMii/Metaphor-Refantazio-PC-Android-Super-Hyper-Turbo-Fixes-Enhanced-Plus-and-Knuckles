@@ -107,10 +107,10 @@ void config_defaults(Config* c)
      * -0.2 ms) and no toon rim light (a broken bright line of 1-2 px at every distance); the PC keeps both */
     c->q_outline_dist = 40;
     c->q_rim_dist = 0.001f;
-    /* when CharacterMotionVectors is on: the skinned meshes' own motion only within 20 m in a crowd, on Android (the
-     * user's choice, 29 Oct 2026: tablet -0.15 ms a frame in a crowded place); the PC tracks every character's limbs */
+    /* when CharacterMotionVectors is on: every character's limbs keep their own motion, on both (the user's choice,
+     * 31 Oct 2026: limiting them to 20 m in a crowd saved nothing measurable on the tablet, Q52) */
     c->q_mv_dist = 40.0f;
-    c->q_mv_skin_dist = 20.0f;
+    c->q_mv_skin_dist = 0;
     c->q_mv_crowd = 12;
     /* the world's stabilisation clamped to its 4 direct neighbours, on both (the user's choice, 29 Oct 2026: tablet
      * -0.3 ms a frame) */
@@ -318,7 +318,6 @@ void config_load(Config* c, const char* ini)
         c->q_farmesh = 0;
         c->q_outline_dist = 0;
         c->q_rim_dist = 0;
-        c->q_mv_skin_dist = 0; /* every character's limbs keep their own motion */
     }
     if (!have_ini) { /* keep defaults */
         c->q_rim_hooks = c->q_rim_dist > 0;
@@ -618,7 +617,7 @@ void config_load(Config* c, const char* ini)
     if (!(c->q_mv_dist >= 0) || c->q_mv_dist > 1000.0f)
         c->q_mv_dist = 40.0f;
     /* the skinned vertex buffers are copied whole every frame (tablet log 31: about 49 a frame, part of the +1.5 ms);
-     * auto = the profile's: 20 m on Android, 0 (all) on PC */
+     * auto = 0 (all), a number limits them */
     {
         float def = c->q_mv_skin_dist;
         c->q_mv_skin_dist = ini_float_auto(ini, "Quality", "MotionVectorSkinDistance", def);

@@ -357,7 +357,7 @@ void ab_start(void)
         s_q[16].q_stab_world_taps = 8;
         s_q[17].q_mv = 1, s_q[17].q_mv_skin_dist = 0;
         s_q[18].q_mv = 1, s_q[18].q_mv_skin_dist = 20;
-        s_q[19].q_mv = 1, s_q[19].q_mv_skin_dist = 20, s_q[19].q_smaa = 1;
+        s_q[19].q_mv = 1, s_q[19].q_mv_skin_dist = 0, s_q[19].q_smaa = 1;
         s_qname = s_qname_feat;
         s_qn = QV;
         break;
