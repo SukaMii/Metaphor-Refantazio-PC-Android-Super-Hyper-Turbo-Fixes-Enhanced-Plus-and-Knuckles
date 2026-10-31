@@ -65,7 +65,7 @@ In the game:
 In the android app settings (eg GameNative):
 - Game seems to perform better on proton 10 than the latest proton 11 (needs more testing).
 - WinNative usually does what follows automatically, but if you are using another program ...
-- Grab a recent GPU Turnip driver from [StevenMXZ](https://github.com/StevenMXZ/Adreno-Tools-Drivers/releases) (recommended patched version) for your specific mobile GPU and load it. You can also use a [driver from the WinNative developers](https://github.com/WinNative-Emu/Drivers/releases) in its p version to force higher clocks in your GPU.
+- Grab a recent GPU Turnip driver from [StevenMXZ](https://github.com/StevenMXZ/Adreno-Tools-Drivers/releases) (recommended patched version) for your specific mobile GPU and load it. You can also use a [driver from the WinNative developers](https://github.com/WinNative-Emu/Drivers/releases) in its p version to force higher clocks in your GPU (this obviously raises your power consumption, so do this only if you can't reach your target FPS and if the GPU scaling isn't working).
 - Also install and use the latest DXVK gplasync, find it [here](https://github.com/Arihany/WinlatorWCPHub) , latest is 3.1.1 at the time of writing.
 - If you use WinNative turn on SGSR in the FX tab for better sharpness. I suggest to try an equivalent upscaler in your chosen app.
 - On RedMagic Astra (Snapdragon 8 elite, 9 inch screen) the game ran fine at 900p with no external cooler, please choose an appropriate resolution for your device and screen size.
