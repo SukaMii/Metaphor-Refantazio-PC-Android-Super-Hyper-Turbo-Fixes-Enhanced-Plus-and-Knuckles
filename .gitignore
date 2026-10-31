@@ -1,0 +1,17 @@
+# Build output and the Python environment: made again by build.ps1 and pip
+build/
+dist/
+.venv/
+__pycache__/
+*.pyc
+
+# Logs, captures and compare shots: pictures and data of the game, and local paths
+*.log
+captures/
+MetaphorCPU_*/
+
+# Third-party binaries kept for the tablet's Luma test
+luma_android/
+
+# The game's own shaders (the game's content): extract them from your copy, see tests/data/README.md
+tests/data/*.dxbc

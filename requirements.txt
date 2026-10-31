@@ -1,0 +1,5 @@
+# To build: the Zig C/C++ toolchain
+ziglang==0.16.0
+# Only for the analysis scripts in tools\ (not needed to build)
+capstone==5.0.9
+pefile==2024.8.26
