@@ -615,3 +615,19 @@ void ab_after_window(void)
     if (++s_window >= s_windows)
         apply(cycling() ? (s_mode + 1) % s_qn : !s_mode);
 }
+
+/* [GpuProbe] CompareShots=13: capture.c saves one image per variant of Compare=features */
+int ab_shot_count(void)
+{
+    return s_active && g_cfg.ab_compare == AB_FEATURES ? s_qn : 0;
+}
+
+const char* ab_shot_name(int i)
+{
+    return s_qname[i];
+}
+
+void ab_shot_apply(int i)
+{
+    apply(i);
+}

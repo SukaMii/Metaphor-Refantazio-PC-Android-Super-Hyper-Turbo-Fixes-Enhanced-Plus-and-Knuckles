@@ -112,4 +112,4 @@ If your PC is capable enough you should use the [Luma framework](https://github.
 * [meshoptimizer](https://github.com/zeux/meshoptimizer) by Arseny Kapoulkine (MIT licence, `third_party\meshoptimizer\LICENSE.md`).
 * MetaphorFix (by Lyall) and Luma are separate projects; the documents mention them where they were used alongside this mod.
 * Winlator, WinNative and GameNative are projects of the respective authors and are not affiliated with this mod. A special thanks to all of them for making it possible to run the game on android.
-* This project is not affiliated with Atlus or Sega. It contains no game files: no code, shaders, textures or pictures of the game. A special thanks to the developers for making this amazing game.
+* This project is not affiliated with Atlus or Sega. It contains no game files: no code, shaders or textures. The only pictures of the game are the screenshots in [VisualComparison.md](VisualComparison.md). A special thanks to the developers for making this amazing game.

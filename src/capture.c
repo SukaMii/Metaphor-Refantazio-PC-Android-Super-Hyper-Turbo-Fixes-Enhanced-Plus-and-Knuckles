@@ -1222,6 +1222,11 @@ static const CmpVariant g_cmp_wtex[] = {
     {"world-textures-game", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, -1, 0},
     {"world-textures-0.5", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, -1, 2},
     {"world-textures-1.0", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, -1, 4}};
+/* CompareShots=13: every change of RESULTS.md, the variants of [ABTest] Compare=features (ab.c switches them; held longer
+ * for the stabilisation's history to settle) */
+#define FEAT_N 32
+#define FEAT_HOLD 20
+static CmpVariant g_cmp_feat[FEAT_N];
 static const CmpVariant* g_cmp = g_cmp_fx;
 static int CMP_N = (int)(sizeof(g_cmp_fx) / sizeof(g_cmp_fx[0]));
 #define CMP_HOLD 6
@@ -1238,6 +1243,10 @@ static char g_cmp_dir[MAX_PATH];
 static void cmp_apply(int i)
 {
     const CmpVariant* v = &g_cmp[i];
+    if (g_cfg.compare_shots == 13) {
+        ab_shot_apply(i);
+        return;
+    }
     if (v->fog >= 0)
         g_cfg.q_fog = v->fog;
     if (v->glare >= 0)
@@ -1289,6 +1298,11 @@ static void compare_tick(void)
                     GetTickCount64() - t0 > (uint64_t)g_cfg.capture_after_sec * 1000;
         if (!key && !timed)
             return;
+        if (g_cfg.compare_shots == 13 && !ab_shot_count()) {
+            LOGI("Compare shots: CompareShots=13 needs [ABTest] Enabled=1 and Compare=features");
+            g_cmp_count++;
+            return;
+        }
         output_dir(g_cmp_dir, sizeof(g_cmp_dir), "compare");
         g_cmp_saved[0] = g_cfg.q_fog, g_cmp_saved[1] = g_cfg.q_glare, g_cmp_saved[2] = g_cfg.q_smaa;
         g_cmp_saved[3] = g_cfg.q_farmesh, g_cmp_saved_fms = g_cfg.q_fm_shadow, g_cmp_saved_sf = g_cfg.q_fm_seams_from;
@@ -1299,7 +1313,14 @@ static void compare_tick(void)
         g_cmp_saved_knock = g_cfg.q_knock;
         g_cmp_saved_lm = g_cfg.q_line_mode, g_cmp_saved_lr = g_cfg.q_line_redraws;
         g_cmp_saved_wtex = g_cfg.q_world_tex_q;
-        if (g_cfg.compare_shots == 12) {
+        if (g_cfg.compare_shots == 13) {
+            CMP_N = ab_shot_count();
+            if (CMP_N > FEAT_N)
+                CMP_N = FEAT_N;
+            for (int i = 0; i < CMP_N; i++)
+                g_cmp_feat[i].name = ab_shot_name(i);
+            g_cmp = g_cmp_feat;
+        } else if (g_cfg.compare_shots == 12) {
             g_cmp = g_cmp_wtex, CMP_N = (int)(sizeof(g_cmp_wtex) / sizeof(g_cmp_wtex[0]));
         } else if (g_cfg.compare_shots == 11) {
             g_cmp = g_cmp_line, CMP_N = (int)(sizeof(g_cmp_line) / sizeof(g_cmp_line[0]));
@@ -1363,6 +1384,8 @@ static void compare_tick(void)
             g_cfg.q_knock = g_cmp_saved_knock;
             g_cfg.q_line_mode = g_cmp_saved_lm, g_cfg.q_line_redraws = g_cmp_saved_lr;
             g_cfg.q_world_tex_q = g_cmp_saved_wtex;
+            if (g_cfg.compare_shots == 13)
+                ab_shot_apply(0);
             g_cmp_step = -1;
             g_cmp_count++;
             LOGI("Compare shots: %d images written to %s", CMP_N, g_cmp_dir);
@@ -1372,7 +1395,7 @@ static void compare_tick(void)
         cmp_apply(g_cmp_step);
         return;
     }
-    if (++g_cmp_frames >= CMP_HOLD)
+    if (++g_cmp_frames >= (g_cfg.compare_shots == 13 ? FEAT_HOLD : CMP_HOLD))
         g_cmp_want = 1; /* the next Present copies the back buffer */
 }
 

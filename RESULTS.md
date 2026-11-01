@@ -46,7 +46,7 @@ One 17-minute session under GameNative (Wine 10.0), in the Sunlumeo street, stan
 | ↳ World clamped to 4 neighbours | No | on | on | −0.5 ms · 0 W |
 | Characters' motion vectors | Yes, moving characters stay sharp | off | off | +1.3 ms · +0.1 W |
 
-The "↳" rows only act when the row above them is on.
+The "↳" rows only act when the row above them is on. Pictures of each change, in this order: **[VisualComparison.md](VisualComparison.md)**.
 
 **The last column** comes from one session of about 26 minutes on the tablet, in the same street, standing still (preset `Q52_features_tablet.ini`, GameNative, Wine 10.0): 20 variants of 30 s in turn, after a 4-minute hold. **−** is a saving and **+** a cost against the defaults, which take 20.3 ms and 7.4 W. Each change was taken back on its own with all the others on. The stabilisation was built up part by part, so each of its rows is the step from the variant before; its first row is the whole switch, measured with the limbs' motion limited to 20 m, which made no measurable difference (see the options below).
 
@@ -62,8 +62,8 @@ The "↳" rows only act when the row above them is on.
 | **GPU timestamp queries** (`[GpuProbe] Timing=1`) | GPU time per render pass, grouped by target size and format: shows which pass a change acts on. |
 | **Device telemetry** (Android) | Battery power (W), GPU clock and busy %, CPU clusters and per-thread CPU time, read from `/sys` and `/proc`. |
 | **Correctness checks on PC** (`[ShadowCull] Verify=1`, preset Q51) | Every draw the culling would skip is still drawn, inside an occlusion query. About a million of them every 10 s, animated characters included: **0 samples passed**, so the picture is unchanged. |
-| **Compare shots on PC** (`[GpuProbe] CompareShots`, F10) | The same moment saved once per variant at full size, then compared side by side and as zoomed sheets. Camera drift between shots is removed by a per-pixel fit before differences are judged. |
-| **Play checks with F7** | The temporal stabilisation is switched on and off while playing (a still image cannot show it). `[GpuProbe] MotionVectorView` colours the characters' motion. |
+| **Compare shots on PC** (`[GpuProbe] CompareShots`, F10; preset `Q53_feature_shots_pc.ini` for every change) | The same moment saved once per variant at full size, then compared side by side and as zoomed sheets. Camera drift between shots is removed by a per-pixel fit before differences are judged. |
+| **Play checks with F7** | The temporal stabilisation is switched on and off while playing (a still image shows only part of it). `[GpuProbe] MotionVectorView` colours the characters' motion. |
 | **Offline analysis** | Frame capture (every pass's output and shader), mesh census (which meshes make the far triangles) and simplification tests on those meshes (`tools\simplify_eval.c`) before anything was built into the mod. |
 | **Unit tests** | About 15 test programs, about 250 checks (`build.ps1 -RunTests`), including the D3D11 parts on a WARP device: culling geometry, shader patching (DXBC checksum), mesh read-back and simplification, the adaptive controller on simulated time, the stabiliser and the motion vectors. |
 

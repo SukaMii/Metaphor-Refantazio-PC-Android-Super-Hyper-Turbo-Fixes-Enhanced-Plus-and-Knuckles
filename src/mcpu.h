@@ -11,7 +11,7 @@
 #include <mmsystem.h>
 #include <stdint.h>
 
-#define MCPU_VERSION "0.52.1"
+#define MCPU_VERSION "0.52.2"
 
 /* ------------------------------------------------------------------ config */
 typedef struct Config {
@@ -529,6 +529,9 @@ void mcpu_register_own_thread(DWORD tid);
 void ab_start(void);
 const char* ab_window_tag(void);
 void ab_after_window(void);
+int ab_shot_count(void);
+const char* ab_shot_name(int i);
+void ab_shot_apply(int i);
 
 /* ------------------------------------------------------------------ profiler (profiler.c) */
 void profiler_start(void);

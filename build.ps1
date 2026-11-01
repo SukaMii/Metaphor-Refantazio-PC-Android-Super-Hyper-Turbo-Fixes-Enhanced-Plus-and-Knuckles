@@ -121,6 +121,7 @@ if ($RunTests) {
     & "$out\frame_test.exe" "$out\MetaphorCPU.dll" "$root\tests\frame_test_capture.ini" capture
     Get-ChildItem "$out\MetaphorCPU_compare folder\MetaphorCPU_compare_*" -Directory -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
     & "$out\frame_test.exe" "$out\MetaphorCPU.dll" "$root\tests\frame_test_compare.ini" capture
+    & "$out\frame_test.exe" "$out\MetaphorCPU.dll" "$root\tests\frame_test_shots.ini" shots
     # the mock checks the Android-profile hooks (on native Windows the PC profile leaves the timer alone)
     $env:METAPHORCPU_INI = "$root\tests\host_test.ini"
     & "$out\MetaphorCPU_Launcher.exe" --game "$out\mockgame\mock_game.exe" --dll "$out\MetaphorCPU.dll" --wait

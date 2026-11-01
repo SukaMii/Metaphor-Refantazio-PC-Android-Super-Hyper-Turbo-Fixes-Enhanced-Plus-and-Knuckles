@@ -4,6 +4,10 @@
 
 /* effects.c (not linked here): CompareShots=10 asks it for the near characters' pixel shaders */
 int fx_near_char_ps(uint64_t* out, int max) { (void)out, (void)max; return 0; }
+/* ab.c (not linked here): CompareShots=13 */
+int ab_shot_count(void) { return 0; }
+const char* ab_shot_name(int i) { (void)i; return ""; }
+void ab_shot_apply(int i) { (void)i; }
 
 static int fails;
 #define EXPECT(c, what)                                                                                         \

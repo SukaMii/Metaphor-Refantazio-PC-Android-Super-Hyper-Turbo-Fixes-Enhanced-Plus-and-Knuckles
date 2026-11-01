@@ -227,6 +227,8 @@ int main(int argc, char** argv)
     int overall = argc > 3 && strcmp(argv[3], "overall") == 0;
     /* "features": an INI with [ABTest] Compare=features: the far meshes set up, the cycle held, then moving on */
     int features = argc > 3 && strcmp(argv[3], "features") == 0;
+    /* "shots": an INI with [GpuProbe] CompareShots=13: one image per variant of Compare=features, then the INI's again */
+    int shots = argc > 3 && strcmp(argv[3], "shots") == 0;
     if (argc > 3 && (strcmp(argv[3], "probe") == 0 || verify))
         throwaway_device();
     HRESULT hr = create(wnd, &sc, &dev, &ctx);
@@ -659,7 +661,7 @@ int main(int argc, char** argv)
     QueryPerformanceFrequency(&f);
     QueryPerformanceCounter(&next);
     LONGLONG step = f.QuadPart / 30;
-    int nframes = shaders ? 240 : 150; /* shaders: the knock-out cycle needs a few 2 s turns */
+    int nframes = shaders ? 240 : shots ? 520 : 150; /* shaders: the knock-out cycle needs a few 2 s turns */
     for (int i = 0; i < nframes; i++) {
         if (probe) {
             UINT stride = 12, off = 0;
@@ -918,7 +920,7 @@ int main(int argc, char** argv)
     const char* fr = strstr(buf, "frames: ");
     double fps = fr ? atof(fr + 8) : 0;
     printf("        first frame report: %.1f fps\n", fps);
-    if (!probe && !overall && !features && !shaders) /* overall: the game-as-is half gives the coarse timer back */
+    if (!probe && !overall && !features && !shaders && !shots) /* overall: the game-as-is half gives the coarse timer back */
         EXPECT(fps > 27 && fps < 33, "frame rate measured at ~30 fps");
     if (waits) {
         const char* w = strstr(buf, "main thread per frame (");
@@ -1121,6 +1123,40 @@ int main(int argc, char** argv)
         EXPECT(strstr(buf, "Far meshes: ") != NULL, "far meshes set up at device creation");
         EXPECT(strstr(buf, "[Q0 mod-defaults transition]") != NULL, "the first variant held, its windows left out");
         EXPECT(strstr(buf, "now running variant 1 (no-shadow-culling)") != NULL, "the cycle moved on after the hold");
+    } else if (shots) {
+        char dir[MAX_PATH], pat[MAX_PATH], best[MAX_PATH] = "";
+        GetModuleFileNameA(NULL, dir, sizeof(dir));
+        *strrchr(dir, '\\') = 0;
+        strcat(dir, "\\MetaphorCPU_compare folder");
+        snprintf(pat, sizeof(pat), "%s\\MetaphorCPU_compare_*", dir);
+        WIN32_FIND_DATAA fd;
+        HANDLE h = FindFirstFileA(pat, &fd);
+        if (h != INVALID_HANDLE_VALUE) {
+            do
+                if (strcmp(fd.cFileName, best) > 0)
+                    snprintf(best, sizeof(best), "%s", fd.cFileName);
+            while (FindNextFileA(h, &fd));
+            FindClose(h);
+        }
+        int imgs = 0;
+        snprintf(pat, sizeof(pat), "%s\\%s\\*.png", dir, best);
+        h = FindFirstFileA(pat, &fd);
+        if (h != INVALID_HANDLE_VALUE) {
+            do
+                imgs++;
+            while (FindNextFileA(h, &fd));
+            FindClose(h);
+        }
+        char first[MAX_PATH], last[MAX_PATH];
+        snprintf(first, sizeof(first), "%s\\%s\\1_mod-defaults.png", dir, best);
+        snprintf(last, sizeof(last), "%s\\%s\\20_steady-image.png", dir, best);
+        printf("        compare folder %s, %d images\n", best[0] ? best : "(none)", imgs);
+        EXPECT(imgs == 20, "one image per variant of the features cycle");
+        EXPECT(GetFileAttributesA(first) != INVALID_FILE_ATTRIBUTES && GetFileAttributesA(last) != INVALID_FILE_ATTRIBUTES,
+               "named after the variants, in the cycle's order");
+        const char* end = strstr(buf, "now running variant 19 (steady-image)");
+        EXPECT(end && strstr(end, "now running variant 0 (mod-defaults)") && strstr(end, "Compare shots: 20 images written"),
+               "the INI's settings back after the last image");
     } else if (overall) {
         EXPECT(strstr(buf, "Overall cycle: ") != NULL, "the overall cycle started");
         EXPECT(strstr(buf, "Far meshes: ") != NULL, "far meshes set up at device creation although the game-as-is half runs first");
