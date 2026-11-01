@@ -2,7 +2,7 @@
   <img src="project%20logo/animated%20logo%20small.gif" alt="Metaphor ReFantazio PC Android Super Hyper Turbo Fixes Enhanced Plus and Knuckles logo">
 </p>
 
-# Metaphor-Refantazio-PC-Android-Super-Hyper-Turbo-Fixes-Enhanced-Plus-and-Knuckles
+# Metaphor Refantazio PC Android Super Hyper Turbo Fixes Enhanced Plus and Knuckles
 
 A performance mod for **Metaphor: ReFantazio** (PC version). It was made for playing the game on Android phones and tablets through Winlator / GameNative (Wine + DXVK + FEX), and it also runs on Windows where it provides performance improvements without altering the visual presentation (except far shadows running at half speed, hardly noticeable, can be turned off).
 For Android upgrades were made in CPU handling, far meshes polygon count, removal of the white light rim around models (causes shimmering), Dynamic LOD, dropping SMAA from Ultra to High and more.
