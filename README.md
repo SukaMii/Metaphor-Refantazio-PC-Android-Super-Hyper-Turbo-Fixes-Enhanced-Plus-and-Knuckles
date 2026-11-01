@@ -32,7 +32,7 @@ What it changes, in short:
 * **Hardly visible** (Android defaults): simpler far meshes made by the mod, far shadows updated every 2nd frame and ending at 100 m, far NPCs animated every 2nd frame, the game's simple NPC models from 60 m (closer when the frame rate drops), SMAA High instead of Ultra, glare off, character outlines within 40 m, no toon rim light.
 * **Optional, `SteadyImage=on`:** a steadier picture: each frame is blended with the previous one, following the camera and the characters' movement, so laces, hair, thin lines and railings shimmer much less. It costs about 2 ms of GPU work per frame on the tablet.
 
-Every change with its measured saving, what it looks like and how it was tested: **[RESULTS.md](RESULTS.md)**.
+Every change with its measured saving, what it looks like and how it was tested: **[RESULTS.md](RESULTS.md)**. Comparison shots are available in [VisualComparison.md](VisualComparison.md) .
 
 ## Install
 
