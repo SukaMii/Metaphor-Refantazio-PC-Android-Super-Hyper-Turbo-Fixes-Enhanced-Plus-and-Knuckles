@@ -82,9 +82,9 @@ Zoomed 2×: between 60 m and 100 m, people, horses and carts become the game's s
 
 ![NPC stand-ins from 60 m, adaptive down to 40 m](comparison/11_npc_stand_ins.png)
 
-## Steadier image
+## Steadier image (off by default)
 
-> **These changes are truly visible only in motion.** They work between frames, calming the shimmer of thin lines while the camera and the characters move. A still picture shows only a small part of that, so the close-ups below look much alike: judge it in the game. On PC, F7 switches it off and on while playing.
+> **These changes are truly visible only in motion.** They work between frames, calming the shimmer of thin lines while the camera and the characters move. A still picture shows only a small part of that, so the close-ups below look much alike: judge it in the game. On PC, F7 switches it off and on while playing (also on android if you assign a virtual button to F7).
 
 ### Steadier image: one switch (`SteadyImage=on`: the four parts below + SMAA Medium)
 
@@ -101,6 +101,8 @@ Zoomed 3×: the thin dark lines in the hair are smoother and less broken.
 Zoomed 3×: the thin dark lines in the hair are a little less broken.
 
 ![Temporal stabilisation, characters](comparison/13_stabilise_characters.png)
+
+It's worth using a stronger stabilization percentage, like 60 or 80% when characters motion vectors are also on.
 
 ### Temporal stabilisation, rest of the image (50%)
 
