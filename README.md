@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="project%20logo/logo.jpg" alt="Metaphor ReFantazio PC Android Super Hyper Turbo Fixes Enhanced Plus and Knuckles logo">
+  <img src="project%20logo/animated%20logo%20small.gif" alt="Metaphor ReFantazio PC Android Super Hyper Turbo Fixes Enhanced Plus and Knuckles logo">
 </p>
 
 # Metaphor-Refantazio-PC-Android-Super-Hyper-Turbo-Fixes-Enhanced-Plus-and-Knuckles
