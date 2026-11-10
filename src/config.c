@@ -2,8 +2,67 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <intrin.h>
 
 Config g_cfg;
+
+void cpu_brand(char* out, size_t cap)
+{
+    int r[4];
+    char b[49] = {0};
+    __cpuid(r, 0x80000000);
+    if ((unsigned)r[0] >= 0x80000004u) {
+        __cpuid((int*)(b + 0), 0x80000002);
+        __cpuid((int*)(b + 16), 0x80000003);
+        __cpuid((int*)(b + 32), 0x80000004);
+    }
+    const char* s = b;
+    while (*s == ' ')
+        s++;
+    snprintf(out, cap, "%s", *s ? s : "unknown");
+}
+
+/* A Steam Deck, under Proton or with Windows installed: its processor calls itself "AMD Custom APU 0405", and its
+ * firmware names Valve's boards Jupiter (LCD) and Galileo (OLED); Wine fills the BIOS registry key from the Linux
+ * firmware tables, as Windows does. Not the SteamDeck=1 variable: Steam sets it on every SteamOS device, desktops
+ * with a far stronger GPU included. 1 = by the processor, 2 = by the board. */
+int steamdeck_match(const char* cpu, const char* maker, const char* product)
+{
+    if (cpu && strstr(cpu, "AMD Custom APU 0405"))
+        return 1;
+    if (maker && product && _stricmp(maker, "Valve") == 0 &&
+        (_stricmp(product, "Jupiter") == 0 || _stricmp(product, "Galileo") == 0))
+        return 2;
+    return 0;
+}
+
+static void firmware_name(const char* value, char* out, DWORD cap)
+{
+    typedef LONG(WINAPI * RegGetValueA_t)(HKEY, LPCSTR, LPCSTR, DWORD, LPDWORD, PVOID, LPDWORD);
+    static RegGetValueA_t get;
+    out[0] = 0;
+    if (!get) {
+        HMODULE adv = LoadLibraryA("advapi32.dll");
+        get = adv ? (RegGetValueA_t)(void*)GetProcAddress(adv, "RegGetValueA") : NULL;
+    }
+    if (get && get(HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\BIOS", value, 0x00000002 /* RRF_RT_REG_SZ */,
+                   NULL, out, &cap) != 0)
+        out[0] = 0;
+}
+
+static int host_is_steam_deck(char* why, size_t cap)
+{
+    char cpu[64], maker[64], product[64];
+    cpu_brand(cpu, sizeof(cpu));
+    firmware_name("SystemManufacturer", maker, sizeof(maker));
+    firmware_name("SystemProductName", product, sizeof(product));
+    int m = steamdeck_match(cpu, maker, product);
+    if (m == 1)
+        snprintf(why, cap, "processor %s", cpu);
+    else if (m == 2)
+        snprintf(why, cap, "board %s %s", maker, product);
+    return m != 0;
+}
 
 void config_defaults(Config* c)
 {
@@ -304,10 +363,16 @@ void config_load(Config* c, const char* ini)
     char prof[16] = "auto";
     if (have_ini)
         GetPrivateProfileStringA("General", "Profile", "auto", prof, sizeof(prof), ini);
-    c->profile_auto = _stricmp(prof, "pc") != 0 && _stricmp(prof, "android") != 0;
+    int deck_set = _stricmp(prof, "steamdeck") == 0 || _stricmp(prof, "deck") == 0;
+    c->profile_auto = _stricmp(prof, "pc") != 0 && _stricmp(prof, "android") != 0 && !deck_set;
+    c->profile_why[0] = 0;
+    int deck = deck_set || (c->profile_auto && host_is_steam_deck(c->profile_why, sizeof(c->profile_why)));
     c->profile = _stricmp(prof, "pc") == 0 ? PROFILE_PC
                  : _stricmp(prof, "android") == 0 ? PROFILE_ANDROID
+                 : deck ? PROFILE_DECK
                  : (g_is_wine ? PROFILE_ANDROID : PROFILE_PC);
+    if (c->profile == PROFILE_DECK)
+        config_profile_pc(c); /* the CPU side as on PC; the picture as on Android */
     if (c->profile == PROFILE_PC) {
         config_profile_pc(c);
         c->q_char_lod = 0; /* [Quality] bubble: the game's own on PC unless the INI sets it */
@@ -719,9 +784,9 @@ void config_load(Config* c, const char* ini)
     if (c->spin_wait_ms < 1) c->spin_wait_ms = 1;
     if (c->job_pool0 < 0 || c->job_pool0 > 32) c->job_pool0 = 0;
     if (c->job_pool1 < 0 || c->job_pool1 > 32) c->job_pool1 = 0;
-    /* PC: the CPU-side keys are ignored even when the INI sets them (e.g. a tablet preset
-     * copied to the PC: tuned for Wine, they slow native Windows down). To try them on a
-     * PC anyway, set [General] Profile=android. */
+    /* PC and Steam Deck: the CPU-side keys are ignored even when the INI sets them (e.g. a tablet preset
+     * copied to the PC: tuned for Wine on Android, they slow native Windows down). To try them anyway, set
+     * [General] Profile=android. */
     /* the quality hooks: installed when any option is changed, statistics asked for, or the
      * quality cycle runs */
     c->q_active = c->q_char_hide || !c->q_outlines || !c->q_char_shadows || !c->q_far_shadows || !c->q_shadows ||
@@ -768,7 +833,7 @@ void config_load(Config* c, const char* ini)
                    (c->ab_enabled && (c->ab_compare == AB_FARMESH ||
                                        ((c->ab_compare == AB_OVERALL || c->ab_compare == AB_FEATURES) && c->q_farmesh)));
     c->q_active |= c->q_farmesh || c->q_fm_both;
-    if (c->profile == PROFILE_PC) {
+    if (c->profile == PROFILE_PC || c->profile == PROFILE_DECK) {
         config_profile_pc(c);
         /* the CPU fixes that may help on Windows too, opted into in their own section (a
          * tablet preset copied to the PC cannot turn them on) */

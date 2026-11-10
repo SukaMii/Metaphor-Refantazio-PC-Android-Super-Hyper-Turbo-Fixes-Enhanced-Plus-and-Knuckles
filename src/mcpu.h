@@ -11,13 +11,14 @@
 #include <mmsystem.h>
 #include <stdint.h>
 
-#define MCPU_VERSION "0.52.2"
+#define MCPU_VERSION "0.53.0"
 
 /* ------------------------------------------------------------------ config */
 typedef struct Config {
     int enabled;
-    int profile;              /* PROFILE_ANDROID / PROFILE_PC: which defaults apply ([General] Profile) */
-    int profile_auto;         /* chosen from the host (Wine = Android), not set in the INI */
+    int profile;              /* PROFILE_ANDROID / PROFILE_PC / PROFILE_DECK: which defaults apply ([General] Profile) */
+    int profile_auto;         /* chosen from the host (a Steam Deck, else Wine = Android), not set in the INI */
+    char profile_why[96];     /* what recognised a Steam Deck */
     int profile_when_disabled; /* Enabled=0: still measure (pass-through hooks only) */
     int log_level;            /* 0 errors, 1 info, 2 verbose */
 
@@ -187,7 +188,10 @@ extern Config g_cfg;
 extern HMODULE g_self;
 extern int g_is_wine;
 
-enum { PROFILE_ANDROID = 0, PROFILE_PC = 1 };
+/* Steam Deck: the Android profile's picture changes with the PC profile's CPU side */
+enum { PROFILE_ANDROID = 0, PROFILE_PC = 1, PROFILE_DECK = 2 };
+void cpu_brand(char* out, size_t cap);
+int steamdeck_match(const char* cpu, const char* maker, const char* product);
 void config_defaults(Config* c);
 void timing_period_release(void);
 void config_load(Config* c, const char* ini_path);

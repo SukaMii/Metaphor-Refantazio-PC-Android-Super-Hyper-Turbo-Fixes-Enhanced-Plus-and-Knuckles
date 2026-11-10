@@ -136,6 +136,39 @@ int main(void)
                o.q_stab_hooks, o.q_mv_hooks);
         fails += !ok;
     }
+    /* 0.53.0: the Steam Deck profile: the Android picture, the PC CPU side; [PC] opt-ins count, tablet CPU keys not */
+    {
+        Config a, p, d, d2;
+        load("android", "", &a);
+        load("pc", "", &p);
+        load("steamdeck", "", &d);
+        load("deck", "\n[Yield]\nAdaptiveYield=1\n[SpinLock]\nReplaceSpinLock=1\n[PC]\nFastSemaphore=1", &d2);
+        int picture = d.q_char_lod == a.q_char_lod && d.q_alod == a.q_alod && d.q_far_anim == a.q_far_anim &&
+                      d.q_shadow_dist == a.q_shadow_dist && d.q_shadow_refresh == a.q_shadow_refresh &&
+                      d.q_glare == a.q_glare && d.q_farmesh == a.q_farmesh && d.q_outline_dist == a.q_outline_dist &&
+                      d.q_rim_dist == a.q_rim_dist && d.q_smaa == a.q_smaa && d.shadow_cull == a.shadow_cull &&
+                      d.q_char_lod != p.q_char_lod && d.q_farmesh != p.q_farmesh;
+        int cpu = d.fix_timer_churn == p.fix_timer_churn && d.adaptive_yield == p.adaptive_yield &&
+                  d.replace_spinlock == p.replace_spinlock && d.fast_sem == p.fast_sem && d.affinity_mode == p.affinity_mode &&
+                  d.adaptive_yield != a.adaptive_yield && !d2.adaptive_yield && !d2.replace_spinlock && d2.fast_sem;
+        int ok = picture && cpu && d.profile == PROFILE_DECK && d2.profile == PROFILE_DECK && !d.profile_auto;
+        printf("  [%s] Profile=steamdeck: the Android picture, the PC CPU side             NPCs %d m, far meshes %d, "
+               "SMAA %d, yield %d, spinlock %d, [PC] job semaphore %d\n", ok ? "PASS" : "FAIL", d.q_char_lod, d.q_farmesh,
+               d.q_smaa, d.adaptive_yield, d2.replace_spinlock, d2.fast_sem);
+        fails += !ok;
+        /* recognising the device: the processor, or Valve's board names; not other AMD parts or other boards */
+        int m = steamdeck_match("AMD Custom APU 0405", "", "") == 1 && steamdeck_match("AMD Ryzen 7 5800U", "Valve", "Jupiter") == 2 &&
+                steamdeck_match("x", "VALVE", "galileo") == 2 && !steamdeck_match("AMD Ryzen Z1 Extreme", "ASUSTeK", "ROG Ally") &&
+                !steamdeck_match("Oryon-1", "", "") && !steamdeck_match("x", "Valve", "Steam Machine") &&
+                !steamdeck_match(NULL, NULL, NULL);
+        printf("  [%s] Steam Deck recognised by its processor or its board, nothing else\n", m ? "PASS" : "FAIL");
+        fails += !m;
+        Config h;
+        load("auto", "", &h);
+        printf("  [%s] auto on this PC: %s\n", h.profile != PROFILE_DECK ? "PASS" : "FAIL",
+               h.profile == PROFILE_PC ? "the PC profile" : h.profile == PROFILE_ANDROID ? "Android" : "Steam Deck");
+        fails += h.profile == PROFILE_DECK;
+    }
     /* 0.52.0: Compare=features sets up everything its variants switch; StartAfterSec */
     {
         Config a;

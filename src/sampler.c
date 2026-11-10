@@ -11,6 +11,14 @@
 
 #define SLOTS 6
 #define TOPN 6
+#define MAX_SECTS 20
+
+/* the game's sections: its own code against the protector's (.text1, .xcode) */
+static struct {
+    char name[9];
+    uint8_t *start, *end;
+} g_sect[MAX_SECTS];
+static int g_nsect;
 
 typedef struct Target {
     DWORD tid;
@@ -21,6 +29,7 @@ typedef struct Target {
     SiteTable lib;  /* first non-system, non-game module on the stack (DXVK, steam_api64, ...) */
     LONG64 samples;
     LONG64 in_game; /* samples whose leaf is in METAPHOR.exe */
+    LONG64 in_sect[MAX_SECTS];
 } Target;
 
 static Target g_t[SLOTS];
@@ -151,6 +160,11 @@ static void sample_one(Target* t)
     /* everything below runs with the target already resumed */
     t->samples++;
     void* leaf = (void*)ctx.Rip;
+    for (int s = 0; s < g_nsect; s++)
+        if ((uint8_t*)leaf >= g_sect[s].start && (uint8_t*)leaf < g_sect[s].end) {
+            t->in_sect[s]++;
+            break;
+        }
     site_add(&t->leaf, func_start(leaf), 1);
     int have_game = 0, have_lib = 0;
     if ((uint8_t*)leaf >= g_text && (uint8_t*)leaf < g_text_end) {
@@ -199,6 +213,16 @@ void sampler_start(void)
     if (sig_text_range(game_base(), &text, &len)) {
         g_text = text;
         g_text_end = text + len;
+    }
+    uint8_t* base = (uint8_t*)game_base();
+    IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)(base + ((IMAGE_DOS_HEADER*)base)->e_lfanew);
+    IMAGE_SECTION_HEADER* sec = IMAGE_FIRST_SECTION(nt);
+    for (int i = 0; i < nt->FileHeader.NumberOfSections && g_nsect < MAX_SECTS; i++) {
+        memcpy(g_sect[g_nsect].name, sec[i].Name, 8);
+        g_sect[g_nsect].name[8] = 0;
+        g_sect[g_nsect].start = base + sec[i].VirtualAddress;
+        g_sect[g_nsect].end = base + sec[i].VirtualAddress + sec[i].Misc.VirtualSize;
+        g_nsect++;
     }
     HANDLE h = CreateThread(NULL, 0, sampler_thread, NULL, 0, NULL);
     if (h) {
@@ -277,6 +301,17 @@ void sampler_report(void)
             continue;
         LOGI("  samples: tid %lu '%s' (%lld samples, %.0f%% directly in game code)", t->tid, t->name, t->samples,
              t->in_game * 100.0 / t->samples);
+        char where[240];
+        int w = snprintf(where, sizeof(where), "      where:");
+        LONG64 inside = 0;
+        for (int s = 0; s < g_nsect; s++) {
+            inside += t->in_sect[s];
+            if (t->in_sect[s] && w < (int)sizeof(where) - 40)
+                w += snprintf(where + w, sizeof(where) - w, " %s %.0f%%,", g_sect[s].name, t->in_sect[s] * 100.0 / t->samples);
+        }
+        snprintf(where + w, sizeof(where) - w, " outside the game %.0f%%", (t->samples - inside) * 100.0 / t->samples);
+        LOGI("%s", where);
+        memset(t->in_sect, 0, sizeof(t->in_sect));
         print_top("executing", &t->leaf, t->samples);
         print_top("game function on the stack", &t->game, t->samples);
         print_top("library it is in (DXVK, steam, ...)", &t->lib, t->samples);

@@ -60,7 +60,9 @@ int main(int argc, char** argv)
         return 2;
     }
     /* "pc": the INI selects the PC profile; every CPU-side fix must stay off */
-    int pc = argc > 3 && strcmp(argv[3], "pc") == 0;
+    int deck = argc > 3 && strcmp(argv[3], "deck") == 0;
+    /* "deck": the Steam Deck profile, which has the PC profile's CPU side */
+    int pc = (argc > 3 && strcmp(argv[3], "pc") == 0) || deck;
     SetEnvironmentVariableA("METAPHORCPU_INI", argv[2]);
 
     /* baseline: raw Sleep(0) loop cost before hooks */
@@ -159,7 +161,11 @@ int main(int argc, char** argv)
     buf[got] = 0;
     expect(strstr(buf, "CPU report") != NULL, "profiler wrote a CPU report to the log");
     if (pc) {
-        expect(strstr(buf, "Profile: PC (set in the INI)") != NULL, "PC profile reported");
+        if (deck)
+            expect(strstr(buf, "Profile: Steam Deck (set in the INI) - the picture changes as on Android") != NULL,
+                   "Steam Deck profile reported");
+        else
+            expect(strstr(buf, "Profile: PC (set in the INI)") != NULL, "PC profile reported");
         expect(strstr(buf, "Timer: resolution set") == NULL, "PC profile: timer resolution left to the game");
     } else {
         expect(strstr(buf, "Profile: Android (set in the INI)") != NULL, "Android profile reported");

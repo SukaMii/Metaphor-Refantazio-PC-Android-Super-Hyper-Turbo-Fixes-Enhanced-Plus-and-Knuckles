@@ -1,6 +1,6 @@
 # MetaphorCPU: what it changes and what it saves
 
-MetaphorCPU is an ASI mod for **Metaphor: ReFantazio** (the April 2025 Steam build). It lowers the CPU and GPU load of the game, mainly for **Android emulation** (Winlator / GameNative: Wine + FEX + DXVK). One build and one INI serve both devices: `[General] Profile=auto` picks the Android profile under Wine and the PC profile on Windows.
+MetaphorCPU is an ASI mod for **Metaphor: ReFantazio** (the April 2025 Steam build). It lowers the CPU and GPU load of the game, mainly for **Android emulation** (Winlator / GameNative: Wine + FEX + DXVK). One build and one INI serve every device: `[General] Profile=auto` picks the Android profile under Wine and the PC profile on Windows. A Steam Deck, recognised by its processor or its board, gets a profile of its own: the picture changes of the Android column and the CPU side of the PC column. It has not been tested on a Steam Deck; for a Deck that is not recognised, the release has an INI with `Profile=steamdeck` in its `Steam Deck` folder.
 
 **Test device:** RedMagic Astra tablet (Snapdragon 8 Elite, Adreno 830), Balanced mode, 1600×900, in-game 30 FPS cap, the Sunlumeo street in Grand Trad (the heaviest common scene). **PC:** i7-10750H laptop, for visual checks and correctness checks.
 

@@ -31,22 +31,6 @@ const char* fmt_addr(void* p, char* buf, size_t cap)
     return buf;
 }
 
-static void cpu_brand(char* out, size_t cap)
-{
-    int r[4];
-    char b[49] = {0};
-    __cpuid(r, 0x80000000);
-    if ((unsigned)r[0] >= 0x80000004u) {
-        __cpuid((int*)(b + 0), 0x80000002);
-        __cpuid((int*)(b + 16), 0x80000003);
-        __cpuid((int*)(b + 32), 0x80000004);
-    }
-    const char* s = b;
-    while (*s == ' ')
-        s++;
-    snprintf(out, cap, "%s", *s ? s : "unknown");
-}
-
 static void sibling_path(const char* ext, char* out, size_t cap)
 {
     char path[MAX_PATH];
@@ -130,14 +114,26 @@ int mcpu_init(HMODULE self, const char* ini_override)
         if (wgv)
             LOGI("Wine %s detected: timer-period calls are cheap there; Sleep(0)/spin fixes matter most", wgv());
         char pcfix[96] = "";
-        if (g_cfg.profile == PROFILE_PC && (g_cfg.fix_timer_churn || g_cfg.replace_spinlock || g_cfg.fast_sem))
+        int pc_side = g_cfg.profile == PROFILE_PC || g_cfg.profile == PROFILE_DECK;
+        char why[128];
+        snprintf(why, sizeof(why), "%s", !g_cfg.profile_auto ? "set in the INI"
+                                         : g_cfg.profile == PROFILE_DECK ? g_cfg.profile_why
+                                         : wgv ? "auto: Wine" : "auto: native Windows");
+        if (g_cfg.profile_auto && g_cfg.profile == PROFILE_DECK) {
+            memmove(why + 6, why, strlen(why) + 1 < sizeof(why) - 6 ? strlen(why) + 1 : sizeof(why) - 6);
+            memcpy(why, "auto: ", 6);
+        }
+        if (pc_side && (g_cfg.fix_timer_churn || g_cfg.replace_spinlock || g_cfg.fast_sem))
             snprintf(pcfix, sizeof(pcfix), "; [PC] fixes on:%s%s%s", g_cfg.fix_timer_churn ? " timer" : "",
                      g_cfg.replace_spinlock ? " spinlock" : "", g_cfg.fast_sem ? " job-semaphore" : "");
-        LOGI("Profile: %s (%s)%s%s", g_cfg.profile == PROFILE_PC ? "PC" : "Android",
-             g_cfg.profile_auto ? (wgv ? "auto: Wine" : "auto: native Windows") : "set in the INI",
-             g_cfg.profile == PROFILE_PC ? " - CPU-side fixes off unless set in [PC] (the others target Wine; "
-                                           "their INI keys are ignored), shadow culling as configured"
-                                         : " - CPU-side fixes and shadow culling as configured",
+        LOGI("Profile: %s (%s)%s%s",
+             g_cfg.profile == PROFILE_PC ? "PC" : g_cfg.profile == PROFILE_DECK ? "Steam Deck" : "Android", why,
+             g_cfg.profile == PROFILE_DECK
+                 ? " - the picture changes as on Android; CPU-side fixes off unless set in [PC] (their INI keys are "
+                   "ignored), shadow culling as configured"
+             : pc_side ? " - CPU-side fixes off unless set in [PC] (the others target Wine; "
+                         "their INI keys are ignored), shadow culling as configured"
+                       : " - CPU-side fixes and shadow culling as configured",
              pcfix);
     }
     if (g_cfg.enabled &&

@@ -51,6 +51,11 @@ Write-Host 'Building MetaphorCPU.dll'
 Zig (@('-shared', '-o', "$out\MetaphorCPU.dll") + $core + $meshopt + @("$root\src\core.c", "$root\src\dllmain.c"))
 Copy-Item "$out\MetaphorCPU.dll" "$out\MetaphorCPU.asi" -Force
 Copy-Item "$root\config\MetaphorCPU.ini" "$out\MetaphorCPU.ini" -Force
+# the same INI with the Steam Deck profile set, for a Deck that is not recognised by itself
+New-Item -ItemType Directory -Force "$out\Steam Deck" | Out-Null
+$deckIni = [IO.File]::ReadAllText("$root\config\MetaphorCPU.ini") -replace '(?m)^Profile=auto\r?$', "Profile=steamdeck`r"
+if ($deckIni -notmatch '(?m)^Profile=steamdeck') { throw 'the Steam Deck INI: Profile=auto not found' }
+[IO.File]::WriteAllText("$out\Steam Deck\MetaphorCPU.ini", $deckIni)
 New-Item -ItemType Directory -Force "$out\presets" | Out-Null
 Remove-Item "$out\presets\*.ini" -Force # a mirror of presets\: renamed or retired presets must not linger
 Copy-Item "$root\presets\*.ini" "$out\presets" -Force
@@ -106,6 +111,7 @@ if ($RunTests) {
     & "$out\hook_test.exe"
     & "$out\host_test.exe" "$out\MetaphorCPU.dll" "$root\tests\host_test.ini"
     & "$out\host_test.exe" "$out\MetaphorCPU.dll" "$root\tests\host_test_pc.ini" pc
+    & "$out\host_test.exe" "$out\MetaphorCPU.dll" "$root\tests\host_test_deck.ini" deck
     & "$out\ab_test.exe" "$out\MetaphorCPU.dll" "$root\tests\ab_test.ini"
     & "$out\ab_test.exe" "$out\MetaphorCPU.dll" "$root\tests\ab_test_pc.ini" pc
     & "$out\ab_test.exe" "$out\MetaphorCPU.dll" "$root\tests\ab_test_overall.ini"
